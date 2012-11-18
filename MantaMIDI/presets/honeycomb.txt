@@ -2,8 +2,8 @@ Velocity, 1;
 Pad_Channel, 1;
 Pad_Aftertouch, 0; 
 Pad_InactiveColor, 0; 
-Pad_OnColor, 1; 
-Pad_OffColor, 2;
+Pad_OnColor, 2; 
+Pad_OffColor, 0;
 
 Pad_1, 32;
 Pad_2, 35;
