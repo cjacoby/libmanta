@@ -3,7 +3,8 @@
 #include <iostream>
 #include <fstream>
 
-#define DEFINE_CONFIG_DEFAULT(key, value)          m_configDefaults[key] = value
+#define DEFINE_MASTER_CONFIG_DEFAULT(key, value)   m_configDefaults_Master[key] = value
+#define DEFINE_CONFIG_DEFAULT(key, value)          m_configDefaults_Select[key] = value
 
 // stackoverflow
 const string trim(const string& pString, const string& pWhitespace)
@@ -26,16 +27,15 @@ MantaSettingsParser::MantaSettingsParser(MantaMidiSettings *pSettings)
     m_pSettings = pSettings;
 
     // Master Settings
-    DEFINE_CONFIG_DEFAULT("Velocity", "1");
+    DEFINE_MASTER_CONFIG_DEFAULT("Velocity", "1");
 
     // Pad Settings
-    DEFINE_CONFIG_DEFAULT("Pad_Mode", "0");
-    //DEFINE_CONFIG_DEFAULT("Pad_Layout", "3"); // Duet
-    DEFINE_CONFIG_DEFAULT("Pad_MonoCC", "11");
-    DEFINE_CONFIG_DEFAULT("Pad_InactiveColor", "0");
-    DEFINE_CONFIG_DEFAULT("Pad_OnColor", "1");
-    DEFINE_CONFIG_DEFAULT("Pad_OffColor", "0");
-    DEFINE_CONFIG_DEFAULT("Pad_Channel", "1");
+    DEFINE_MASTER_CONFIG_DEFAULT("Pad_Mode", "0");
+    DEFINE_MASTER_CONFIG_DEFAULT("Pad_MonoCC", "11");
+    DEFINE_MASTER_CONFIG_DEFAULT("Pad_InactiveColor", "0");
+    DEFINE_MASTER_CONFIG_DEFAULT("Pad_OnColor", "1");
+    DEFINE_MASTER_CONFIG_DEFAULT("Pad_OffColor", "0");
+    DEFINE_MASTER_CONFIG_DEFAULT("Pad_Channel", "1");
 
     // Master Pad Settings
 
@@ -111,9 +111,10 @@ bool MantaSettingsParser::ReadCollFile(const char *fileName)
             string key = trim(testStr.substr(0, commaPos));
             string value = trim(testStr.substr(commaPos + 1, testStr.length() - commaPos - 1));
 
-            if (IsValidKey(key))
-                AssignKeyToValue(key, value);
-            else if (key.length() > 0)
+            int keyType = IsValidKey(key);
+            if (keyType)
+                AssignKeyToValue(keyType, key, value);
+            if (key.length() > 0)
             {
                 cout << "PARSE ERROR: Invalid key \"" << key << "\"" << endl;
             }
@@ -130,17 +131,22 @@ bool MantaSettingsParser::ReadCollFile(const char *fileName)
     return false;
 }
 
-bool MantaSettingsParser::IsValidKey(string key)
+int MantaSettingsParser::IsValidKey(string key)
 {   
-    if (m_configDefaults.count(key) > 0)
-        return true;
+    if (m_configDefaults_Master.count(key) > 0)
+        return 1;
+    else if (m_configDefaults_Select.count(key) > 0)
+        return 2;
     else
-        return false;
+        return 0;
 }
 
-void MantaSettingsParser::AssignKeyToValue(string key, string value)
+void MantaSettingsParser::AssignKeyToValue(int type, string key, string value)
 {
-    m_configDefaults[key] = value;
+    if (1 == type)
+        m_configDefaults_Master[key] = value;
+    else if (2 == type)
+        m_configDefaults_Select[key] = value;
 }
 
 void MantaSettingsParser::ParseKey(const string key, string &type, string &function, unsigned long &index)
@@ -184,18 +190,184 @@ bool MantaSettingsParser::UpdateSettings()
 {
     bool bRet = true;
 
-    for(map<string, string>::iterator itr = m_configDefaults.begin(); itr != m_configDefaults.end(); ++itr)
+    for(map<string, string>::iterator itr = m_configDefaults_Master.begin(); itr != m_configDefaults_Master.end(); ++itr)
     {
         string key = (*itr).first;
         string val = (*itr).second;
 
-        bRet &= UpdateSetting(key, val);
+        if (1 == IsValidKey(key))
+            bRet &= UpdateMasterSetting(key, val);
+    }
+
+    for(map<string, string>::iterator itr = m_configDefaults_Select.begin(); itr != m_configDefaults_Select.end(); ++itr)
+    {
+        string key = (*itr).first;
+        string val = (*itr).second;
+
+        if (2 == IsValidKey(key))
+            bRet &= UpdateSelectSetting(key, val);
     }
 
     return bRet;
 }
 
-bool MantaSettingsParser::UpdateSetting(const string& key, const string& val)
+bool MantaSettingsParser::UpdateMasterSetting(const string& key, const string& val)
+{
+    bool bRet = false;
+    bool debug = m_pSettings->GetDebugMode();
+
+    int iVal = atoi(val.c_str());
+
+    string type, function;
+    unsigned long index;
+
+    ParseKey(key, type, function, index);
+
+    if (type == "Pad")
+    {
+        if (function == "Mode")
+            m_pSettings->SetPad_Mode((PadValMode)iVal);
+        else if (function == "LayoutTitle")
+            m_pSettings->SetPadLayoutTitle(val.c_str());
+        else if (function == "MonoCC")
+            m_pSettings->SetPad_MonoCCNumber(iVal);
+        else if (function == "InactiveColor")
+        {
+            m_pSettings->SetAllPadInactiveColor((Manta::LEDState)iVal);
+            if (debug) cout << " Pad Inactive Color: " << iVal << endl;
+        }
+        else if (function == "OnColor")
+        {
+            m_pSettings->SetAllPadOnColor((Manta::LEDState)iVal);
+            if (debug) cout << " Pad On Color: " << iVal << endl;
+        }
+        else if (function == "OffColor")
+        {
+            m_pSettings->SetAllPadOffColor((Manta::LEDState)iVal);
+            if (debug) cout << " Pad Off Color: " << iVal << endl;
+        }
+        else if (function == "Channel")
+            m_pSettings->SetPad_Channel(iVal);
+        else
+        {
+            int midi = -1;
+            int chan = 1;
+            ParseMidiValue(val, midi, chan);
+            if (debug) cout << " Pad " << index << " Midi: " << midi << " " << chan << endl;
+            m_pSettings->SetPad(index - 1, chan - 1, midi - 1);
+        }
+    }
+    else if (type == "Button")
+    {
+        if (function == "MIDI")
+        {
+            int midi = -1;
+            int chan = 1;
+            ParseMidiValue(val, midi, chan);
+
+            if (index == 1 || index == string::npos)
+            {
+                m_pSettings->SetButton_Midi(0, midi);
+                m_pSettings->SetButton_Channel(0, chan);
+            }
+            else if (index == 2 || index == string::npos)
+            {
+                m_pSettings->SetButton_Midi(1, midi);
+                m_pSettings->SetButton_Channel(0, chan);
+            }
+            else if (index == 3 || index == string::npos)
+            {
+                m_pSettings->SetButton_Midi(2, midi);
+                m_pSettings->SetButton_Channel(0, chan);
+            }
+            else if (index == 4 || index == string::npos)
+            {
+                m_pSettings->SetButton_Midi(3, midi);
+                m_pSettings->SetButton_Channel(0, chan);
+            }
+        }
+        else if (function == "Mode")
+        {
+            if (index == 1 || index == string::npos)
+                m_pSettings->SetButton_Mode(0, (ButtonMode)iVal);
+            else if (index == 2 || index == string::npos)
+                m_pSettings->SetButton_Mode(1, (ButtonMode)iVal);
+            else if (index == 3 || index == string::npos)
+                m_pSettings->SetButton_Mode(2, (ButtonMode)iVal);
+            else if (index == 4 || index == string::npos)
+                m_pSettings->SetButton_Mode(3, (ButtonMode)iVal);
+        }
+        else if (function == "InactiveColor")
+        {
+            if (index == 1 || index == string::npos)
+                m_pSettings->SetButton_InactiveColor(0, (Manta::LEDState)iVal);
+            else if (index == 2 || index == string::npos)
+                m_pSettings->SetButton_InactiveColor(1, (Manta::LEDState)iVal);
+            else if (index == 3 || index == string::npos)
+                m_pSettings->SetButton_InactiveColor(2, (Manta::LEDState)iVal);
+            else if (index == 4 || index == string::npos)
+                m_pSettings->SetButton_InactiveColor(3, (Manta::LEDState)iVal);
+        }
+        else if (function == "OnColor")
+        {
+            if (index == 1 || index == string::npos)
+                m_pSettings->SetButton_OnColor(0, (Manta::LEDState)iVal);
+            else if (index == 2 || index == string::npos)
+                m_pSettings->SetButton_OnColor(1, (Manta::LEDState)iVal);
+            else if (index == 3 || index == string::npos)
+                m_pSettings->SetButton_OnColor(2, (Manta::LEDState)iVal);
+            else if (index == 4 || index == string::npos)
+                m_pSettings->SetButton_OnColor(3, (Manta::LEDState)iVal);
+        }
+        else if (function == "OffColor")
+        {
+            if (index == 1 || index == string::npos)
+                m_pSettings->SetButton_OffColor(0, (Manta::LEDState)iVal);
+            else if (index == 2 || index == string::npos)
+                m_pSettings->SetButton_OffColor(1, (Manta::LEDState)iVal);
+            else if (index == 3 || index == string::npos)
+                m_pSettings->SetButton_OffColor(2, (Manta::LEDState)iVal);
+            else if (index == 4 || index == string::npos)
+                m_pSettings->SetButton_OffColor(3, (Manta::LEDState)iVal);
+        }
+    }
+    else if (type == "Slider")
+    {
+        if (function == "MIDI")
+        {
+            int midi = -1;
+            int chan = 1;
+            ParseMidiValue(val, midi, chan);
+
+            if (index == 0 || index == string::npos)
+            {
+                m_pSettings->SetSlider_Midi(0, midi);
+                m_pSettings->SetSlider_Channel(0, chan);
+            }
+            else if (index == 1 || index == string::npos)
+            {
+                m_pSettings->SetSlider_Midi(1, midi);
+                m_pSettings->SetSlider_Channel(1, chan);
+            }
+        }
+        else if (function == "Mode")
+        {
+            if (index == 0 || index == string::npos)
+                m_pSettings->SetSlider_Mode(0, (SliderMode)iVal);
+            else if (index == 1 || index == string::npos)
+                m_pSettings->SetSlider_Mode(1, (SliderMode)iVal);
+        }
+    }
+    else
+    {
+        if (key == "Velocity")
+            m_pSettings->SetUseVelocity(iVal);
+    }
+
+    return bRet;
+}
+
+bool MantaSettingsParser::UpdateSelectSetting(const string& key, const string& val)
 {
     bool bRet = false;
     bool debug = m_pSettings->GetDebugMode();
@@ -355,8 +527,9 @@ bool MantaSettingsParser::UpdateSetting(const string& key, const string& val)
 
 void MantaSettingsParser::PrintSettings()
 {
-    map<string, string>::iterator itr;
+    for(map<string, string>::iterator itr = m_configDefaults_Master.begin(); itr != m_configDefaults_Master.end(); ++itr)
+        cout << (*itr).first << ", " << (*itr).second << ";" << endl;
 
-    for(itr = m_configDefaults.begin(); itr != m_configDefaults.end(); ++itr)
+    for(map<string, string>::iterator itr = m_configDefaults_Select.begin(); itr != m_configDefaults_Select.end(); ++itr)
         cout << (*itr).first << ", " << (*itr).second << ";" << endl;
 }

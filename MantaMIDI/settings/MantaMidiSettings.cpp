@@ -41,6 +41,11 @@ bool MantaMidiSettings::LoadArgs(int argc, char **argv)
         }
         else if (0 == strcmp(argv[i], "-showsettings") || 0 == strcmp(argv[i], "-V"))
             bShowSettings = true;
+        else // there is no param name... so just take the param as the path.
+        {
+            if (strlen(argv[i]) > 0)
+                strcpy(m_layoutPath, argv[i]);
+        }
     }
 
     LoadSettings();
