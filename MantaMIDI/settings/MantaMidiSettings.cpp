@@ -48,7 +48,8 @@ bool MantaMidiSettings::LoadArgs(int argc, char **argv)
         }
     }
 
-    LoadSettings();
+    if (bRet)
+      LoadSettings();
 
     if (bShowSettings)
         PrintSettings();
@@ -388,6 +389,7 @@ void MantaMidiSettings::CalibrateButton(int button, int value)
 void MantaMidiSettings::Reset()
 {
     m_bDebugMode = false;
+    memset(m_layoutPath, 0, 255);
     m_cOctaveOffset = 0;
 
     for (int i = 0; i < numPads; ++i)
@@ -412,9 +414,10 @@ void MantaMidiSettings::LoadSettings()
 {
     if ( strlen(m_layoutPath) > 0)
     {
-        m_pSettingsParser->ReadCollFile(m_layoutPath);
-
-        printf("Using settings from %s.\n\n", m_layoutPath);
+      printf("[DEBUG] strlen(m_layoutPath): %d, %s\n", (int)strlen(m_layoutPath), m_layoutPath);
+      m_pSettingsParser->ReadCollFile(m_layoutPath);
+      
+      printf("Using settings from %s.\n\n", m_layoutPath);
     }
     else
     {
