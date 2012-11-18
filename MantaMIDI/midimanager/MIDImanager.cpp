@@ -21,7 +21,6 @@ MidiManager::MidiManager(MantaMidiSettings *options) :
     {
         m_buttonValues[i] = 0;
     }
-    ResetLEDS();
 }
 
 MidiManager::~MidiManager()
