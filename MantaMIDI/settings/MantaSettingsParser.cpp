@@ -114,9 +114,11 @@ bool MantaSettingsParser::ReadCollFile(const char *fileName)
             int keyType = IsValidKey(key);
             if (keyType)
                 AssignKeyToValue(keyType, key, value);
-            if (key.length() > 0)
+
+            if (keyType == 0 && key.length() > 0)
             {
                 cout << "PARSE ERROR: Invalid key \"" << key << "\"" << endl;
+		printf("[ERROR] key: %s, value: %s, keyType: %d\n", key.c_str(), value.c_str(), keyType);
             }
         }
     }
