@@ -46,7 +46,7 @@ void MidiManager::Initialize()
 {
     if (m_options->GetDebugMode()) cout << "MidiManger::Initialize() Start" << endl;
 
-    SetLEDControl(Manta::PadAndButton, true);
+ SetLEDControl(Manta::PadAndButton, true);
     SetLEDControl(Manta::Slider, false);
 
     for(int i = 0; i < MANTA_BUTTONS; ++i)
@@ -116,24 +116,7 @@ void MidiManager::ButtonEvent(int id, int value)
   if (m_options->GetDebugMode())
     std::cout << "ButtonEvent: " << id << ", " << value << "\n";
 
-  /*if (!GetCalibrationState())
-  {*/
-  SetButtonValue(id, value);
-  if (m_options->GetButton_Mode(id) == bmOctaveDecrement)
-  {
-    m_options->DecrementOctaveOffset();
-    UpdateOffsetLEDs();
-  }
-  else if (m_options->GetButton_Mode(id) == bmOctaveIncrement)
-  {
-    m_options->IncrementOctaveOffset();
-    UpdateOffsetLEDs();
-  }
-  else
-    SendButtonMIDI(id, value, false);
-  /*}
-  else
-    m_options->CalibrateButton(id, value);*/
+  HandleButtonPress(id, value, false);
 }
 
 void MidiManager::PadVelocityEvent(int row, int column, int id, int value)
@@ -149,7 +132,29 @@ void MidiManager::ButtonVelocityEvent(int id, int value)
   if (m_options->GetDebugMode() && m_options->GetUseVelocity())
     std::cout << "ButtonVelocityEvent: " << id << ", " << value << "\n";
 
-    SendButtonMIDI(id, value, true);
+  HandleButtonPress(id, value, true);
+}
+
+void MidiManager::HandleButtonPress(int id, int value, bool bVelocityEvent)
+{
+    /*if (!GetCalibrationState())
+  {*/
+  SetButtonValue(id, value);
+  if (m_options->GetButton_Mode(id) == bmOctaveDecrement)
+    {
+      m_options->DecrementOctaveOffset();
+      UpdateOffsetLEDs();
+    }
+  else if (m_options->GetButton_Mode(id) == bmOctaveIncrement)
+    {
+      m_options->IncrementOctaveOffset();
+      UpdateOffsetLEDs();
+    }
+  else
+      SendButtonMIDI(id, value, false);
+  /*}
+  else
+    m_options->CalibrateButton(id, value);*/
 }
 
 void MidiManager::SendPadMIDI(int noteNum, int value, bool bVelocityEvent)
@@ -352,42 +357,50 @@ void MidiManager::SendButtonMIDI(int noteNum, int value, bool bVelocityEvent)
 {
   int channel = m_options->GetButton_EventChannel(noteNum);
   int midiNote = m_options->GetButton_Midi(noteNum);
+  bool bController = m_options->GetButton_Mode(noteNum) == bmController;
+
+  if (m_options->GetDebugMode()) cout << "SendButtonMIDI: " << channel << " " << midiNote << " " << m_options->GetButton_Mode(noteNum) << " " << noteNum << " " << value << endl;
 
   if ((char)midiNote >= 0)
     {
       MidiNote &note = m_buttonNotes[midiNote];
       
-      if (value > 0)
-      {
-          // velocity mode on - it's a noteon or noteoff
-          if (m_options->GetUseVelocity() && bVelocityEvent)
-              SendButtonNoteOn(channel, midiNote, noteNum, value);
-          // not note on or note off, but positive, so it's aftertouch
-          else if (m_options->GetUseVelocity() && !bVelocityEvent)
-              SendButtonAftertouch(channel, midiNote, noteNum, value);
-          else // velocity off
-          {
-              // Note On
-              if (note.lastValue == 0 && !bVelocityEvent)
-              {
-                  SendButtonNoteOn(channel, midiNote, noteNum, 100);
-                  SendButtonAftertouch(channel, midiNote, noteNum, value);
-              }
-              // Aftertouch
-              else if (note.lastValue > 0)
-                  SendButtonAftertouch(channel, midiNote, noteNum, value);
-          }
-      }
-      else // note off
-      {
-          // ignore velocity events 'cause they're redundant
-          if (!bVelocityEvent)
+      if (bController)
+	Send_ControlChange(channel, midiNote, TranslateButtonValueToMIDI(noteNum, value));
+      else
+	{
+	  if (value > 0)
+	    {
+	      // velocity mode on - it's a noteon or noteoff
+	      if (m_options->GetUseVelocity() && bVelocityEvent)
+		SendButtonNoteOn(channel, midiNote, noteNum, value);
+	      // not note on or note off, but positive, so it's aftertouch
+	      else if (m_options->GetUseVelocity() && !bVelocityEvent)
+		SendButtonAftertouch(channel, midiNote, noteNum, value);
+	      else // velocity off
+		{
+		  // Note On
+		  if (note.lastValue == 0 && !bVelocityEvent)
+		    {
+		      SendButtonNoteOn(channel, midiNote, noteNum, 100);
+		      SendButtonAftertouch(channel, midiNote, noteNum, value);
+		    }
+		  // Aftertouch
+		  else if (note.lastValue > 0)
+		    SendButtonAftertouch(channel, midiNote, noteNum, value);
+		} // end else velocity off
+	    } // end value > 0
+	  else // note off
+	    {
+	      // ignore velocity events 'cause they're redundant
+	      if (!bVelocityEvent)
               SendButtonNoteOff(channel, midiNote, noteNum);
-      }
+	    } // end else note off
+	} // end else - note
 
       note.lastValue = value;
       note.curValue = value;
-    }
+    } // end if valid note
 }
 
 void MidiManager::SendButtonNoteOn(int channel, int midiNote, int noteNum, int value)
@@ -399,18 +412,9 @@ void MidiManager::SendButtonNoteOn(int channel, int midiNote, int noteNum, int v
 
 void MidiManager::SendButtonAftertouch(int channel, int midiNote, int noteNum, int value)
 {
-    if (m_options->GetButton_Mode(noteNum) == bmNote)
-    {
-       if (m_options->GetDebugMode()) cout << "Button Note: ";
+  if (m_options->GetDebugMode()) cout << "Button Note: ";
 
-       Send_Aftertouch(channel, midiNote, TranslateButtonValueToMIDI(noteNum, value));
-    }
-    else if (m_options->GetButton_Mode(noteNum) == bmController)
-    {
-       if (m_options->GetDebugMode()) cout << "Button CC: ";
-
-       Send_ControlChange(channel, midiNote, TranslateButtonValueToMIDI(noteNum, value));
-    }
+  Send_Aftertouch(channel, midiNote, TranslateButtonValueToMIDI(noteNum, value));
 }
 
 void MidiManager::SendButtonNoteOff(int channel, int midiNote, int noteNum)

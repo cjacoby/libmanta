@@ -65,6 +65,8 @@ class MidiManager : public Manta
   int TranslateButtonValueToMIDI(int button, int buttonValue);
 
   /* Handling functions */
+  void HandleButtonPress(int id, int value, bool bVelocityEvent);
+
   void SendPadMIDI(int noteNum, int value, bool bVelocityEvent);
   void SendPadNoteOn(int channel, int midiNote, int noteNum, int value);
   void SendPadAftertouch(int channel, int midiNote, int noteNum, int value);
