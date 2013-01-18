@@ -527,7 +527,7 @@ void MidiManager::SendMIDI(unsigned char ucChannel, MidiActionType actionType, i
       if (m_options->GetDebugMode())
 	printf("Polyphonic Pressure: %d %d %d\n", data[0], data[1], data[2]);
     }
-  // Control Change: 0xB0
+  // Controller Change: 0xB0
   else if (actionType == atControlChange)
     {
       data[0] = 0xB0 + ucChannel;
@@ -536,7 +536,7 @@ void MidiManager::SendMIDI(unsigned char ucChannel, MidiActionType actionType, i
       nBytes = 3;
       
       if (m_options->GetDebugMode())
-	printf("Program Change: %d %d %d\n", data[0], data[1], data[2]);
+	printf("Controller Change: %d %d %d\n", data[0], data[1], data[2]);
     }
   // Program Change: 0xC0
   else if (actionType == atProgramChange)
