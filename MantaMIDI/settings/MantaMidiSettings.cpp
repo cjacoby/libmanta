@@ -390,8 +390,12 @@ void MantaMidiSettings::Reset()
 {
     m_bDebugMode = false;
     memset(m_layoutPath, 0, 255);
-    m_cOctaveOffset = 0;
 
+    // Pad Defaults
+    m_padMode = pvmMonoContinuous;
+    memset(m_padEventChannel, 0, numPads);
+    m_padMonoCCNumber = 11;
+    memset(m_basePadMidi, 0, numPads);
     for (int i = 0; i < numPads; ++i)
     {
         m_padMaxValue[i] = defaultMaxPadVal;
@@ -399,8 +403,21 @@ void MantaMidiSettings::Reset()
         m_onPadColor[i] = Manta::Amber;
         m_offPadColor[i] = Manta::Off;
     }
+
+    // Slider defaults
     for (int i = 0; i < numSliders; ++i)
+      {
+	m_sliderEventChannel[i] = 0;
+	m_sliderMidiNote[i] = i + 1;
         m_sliderMaxValue[i] = defaultMaxSliderVal;
+	m_sliderMode[i] = smContinuous;
+      }
+
+    // Button Defaults
+    m_cOctaveOffset = 0;
+    memset(m_buttonMode, 1, numButtons);
+    memset(m_buttonEventChannel, 0, numButtons);
+    memset(m_buttonMidi, 0, numButtons);
     for (int i = 0; i < numButtons; ++i)
     {
         m_buttonMaxValue[i] = defaultMaxButtonVal;
@@ -431,6 +448,33 @@ void MantaMidiSettings::LoadSettings()
 
 void MantaMidiSettings::PrintSettings()
 {
-    m_pSettingsParser->PrintSettings();
+  //m_pSettingsParser->PrintSettings();
+  PrintCurrentState();
 }
 
+void MantaMidiSettings::PrintCurrentState()
+{
+  cout << "----- Current Settins State -----" << endl;
+  cout << "D: " << m_bDebugMode << ", V: " << m_bUseVelocity << endl;
+  cout << "Pad Send" << endl;
+  cout << "PM: " << m_padMode << " PMCC: " << m_padMonoCCNumber << endl;
+  cout << "Chn Mid Max In On Off" << endl;
+  for (int i = 0; i < numPads; ++i)
+    printf("%d %d %d %d %d %d\n", m_padEventChannel[i], m_basePadMidi[i], m_padMaxValue[i], m_inactivePadColor[i], m_onPadColor[i], m_offPadColor[i]);
+
+  cout << "\nPad Receive" << endl;
+  cout << "Chn AmMid RdMid" << endl;
+  for (int i = 0; i < numPads; ++i)
+    printf("%d %d %d\n", m_padLEDChannel[i], m_AmberLEDMidi[i], m_RedLEDMidi[i]);
+
+  cout << "\nButton" << endl;
+  printf("8ve: %d\n", m_cOctaveOffset);
+  cout << "Mod Chn Mid Max In On Off" << endl;
+  for (int i = 0; i < numButtons; ++i)
+    printf("%d %d %d %d %d %d %d\n", m_buttonMode[i], m_buttonEventChannel[i], m_buttonMidi[i], m_buttonMaxValue[i], m_inactiveButtonColor[i], m_onButtonColor[i], m_offButtonColor[i]);
+  
+  cout << "\nSlider" << endl;
+  cout << "Chn Mid Max Mod" << endl;
+  for (int i = 0; i < numSliders; ++i)
+    printf("%d %d %d %d\n", m_sliderEventChannel[i], m_sliderMidiNote[i], m_sliderMaxValue[i], m_sliderMode[i]);
+}

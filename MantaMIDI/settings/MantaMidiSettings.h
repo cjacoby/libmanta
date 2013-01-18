@@ -123,6 +123,7 @@ class MantaMidiSettings
  private:
     void LoadSettings();
     void PrintSettings();
+    void PrintCurrentState();
 
     MantaSettingsParser *m_pSettingsParser;
 
