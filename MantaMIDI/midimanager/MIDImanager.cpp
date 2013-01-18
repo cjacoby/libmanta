@@ -366,7 +366,11 @@ void MidiManager::SendButtonMIDI(int noteNum, int value, bool bVelocityEvent)
       MidiNote &note = m_buttonNotes[midiNote];
       
       if (bController)
-	Send_ControlChange(channel, midiNote, TranslateButtonValueToMIDI(noteNum, value));
+	{
+	  Send_ControlChange(channel, midiNote, TranslateButtonValueToMIDI(noteNum, value));
+	  if (value) SetButtonLED(m_options->GetButton_OnColor(noteNum), noteNum);
+	  else SetButtonLED(m_options->GetButton_OffColor(noteNum), noteNum);
+	}
       else
 	{
 	  if (value > 0)

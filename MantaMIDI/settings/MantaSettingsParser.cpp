@@ -55,14 +55,15 @@ MantaSettingsParser::MantaSettingsParser(MantaMidiSettings *pSettings)
     unsigned char m_RedLEDMidi[numPads];*/
 
     // Button Settings
+    DEFINE_CONFIG_DEFAULT("Button_1_Mode", "2");
+    DEFINE_CONFIG_DEFAULT("Button_2_Mode", "3");
+    DEFINE_CONFIG_DEFAULT("Button_3_Mode", "1");
+    DEFINE_CONFIG_DEFAULT("Button_4_Mode", "1");
+
     for (int i = 1; i <= 4; ++i)
     {
         sprintf(strResult, "Button_%d_MIDI", i);
         sprintf(extra, "%d 1", 102 + i);
-        DEFINE_CONFIG_DEFAULT(strResult, extra);
-
-        sprintf(strResult, "Button_%d_Mode", i);
-        sprintf(extra, "%d", 1);
         DEFINE_CONFIG_DEFAULT(strResult, extra);
 
         sprintf(strResult, "Button_%d_InactiveColor", i);
@@ -271,22 +272,22 @@ bool MantaSettingsParser::UpdateSetting(const string& key, const string& val)
             if (index == 1 || index == string::npos)
             {
                 m_pSettings->SetButton_Midi(0, midi);
-                m_pSettings->SetButton_Channel(0, chan);
+                m_pSettings->SetButton_Channel(0, chan - 1);
             }
             else if (index == 2 || index == string::npos)
             {
                 m_pSettings->SetButton_Midi(1, midi);
-                m_pSettings->SetButton_Channel(0, chan);
+                m_pSettings->SetButton_Channel(0, chan - 1);
             }
             else if (index == 3 || index == string::npos)
             {
                 m_pSettings->SetButton_Midi(2, midi);
-                m_pSettings->SetButton_Channel(0, chan);
+                m_pSettings->SetButton_Channel(0, chan - 1);
             }
             else if (index == 4 || index == string::npos)
             {
                 m_pSettings->SetButton_Midi(3, midi);
-                m_pSettings->SetButton_Channel(0, chan);
+                m_pSettings->SetButton_Channel(0, chan - 1);
             }
         }
         else if (function == "Mode")
@@ -354,13 +355,13 @@ bool MantaSettingsParser::UpdateSetting(const string& key, const string& val)
 
             if (index == 0 || index == string::npos)
             {
-                m_pSettings->SetSlider_Midi(0, midi);
-                m_pSettings->SetSlider_Channel(0, chan);
+                m_pSettings->SetSlider_Midi(0, midi - 1);
+                m_pSettings->SetSlider_Channel(0, chan - 1);
             }
             else if (index == 1 || index == string::npos)
             {
-                m_pSettings->SetSlider_Midi(1, midi);
-                m_pSettings->SetSlider_Channel(1, chan);
+                m_pSettings->SetSlider_Midi(1, midi - 1);
+                m_pSettings->SetSlider_Channel(1, chan - 1);
             }
         }
         else if (function == "Mode")
