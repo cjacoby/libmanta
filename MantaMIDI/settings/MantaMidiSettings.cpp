@@ -422,7 +422,8 @@ void MantaMidiSettings::LoadSettings()
     else
     {
         printf("Using default settings.\n");
-        printf("To use custom settings, quit and re-run with \"-layoutfile <filename>\"\n\n");
+        printf("To use custom settings, quit and re-run with \"-layoutfile <filename>\"\n");
+	printf("\te.g. ./MantaMIDI -layoutfile presets/duet.txt\n\n");
     }
 
     m_pSettingsParser->UpdateSettings();

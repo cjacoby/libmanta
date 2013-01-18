@@ -23,8 +23,7 @@ public:
 private:
     int IsValidKey(string key);
     void AssignKeyToValue(int type, string key, string value);
-    bool UpdateMasterSetting(const string& key, const string& val);
-    bool UpdateSelectSetting(const string& key, const string& val);
+    bool UpdateSetting(const string& key, const string& val);
     void ParseKey(const string key, string &type, string &function, unsigned long &index);
     void ParseMidiValue(const string &value, int &midiNote, int &midiChan);
 
