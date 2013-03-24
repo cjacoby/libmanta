@@ -167,13 +167,11 @@ void MidiManager::HandleButtonPress(int id, int value, bool bVelocityEvent)
     {
       m_options->DecrementOctaveOffset();
       UpdateOffsetLEDs();
-      printf("Octave Offset: %d\n", m_options->GetOctaveOffset());
     }
   else if (etNoteOn == onPress && m_options->GetButton_Mode(id) == bmOctaveIncrement && !bVelocityEvent)
     {
       m_options->IncrementOctaveOffset();
       UpdateOffsetLEDs();
-      printf("Octave Offset: %d\n", m_options->GetOctaveOffset());
     }
   else if (bmNote == m_options->GetButton_Mode(id) || bmController == m_options->GetButton_Mode(id))
   {
