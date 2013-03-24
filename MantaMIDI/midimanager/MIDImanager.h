@@ -23,13 +23,15 @@ enum MidiActionType
     atPitchWheel
   };
 
-  enum EventType
-  {
-    etNone = -1,
-    etNoteOff = 0,
-    etNoteOn,
-    etSustain
-  };
+enum EventType
+{
+  etNone = 0,
+  etNoteOff = 1,
+  etNoteOn,
+  etSustain
+};
+
+const static char* EventTypeString[] = {"None", "NoteOff", "NoteOn", "Sustain"};
 
 typedef struct
 {

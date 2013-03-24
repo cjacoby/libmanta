@@ -360,14 +360,18 @@ void MantaMidiSettings::SetButton(int button, unsigned char channel, unsigned ch
 
 void MantaMidiSettings::IncrementOctaveOffset()
 {
+    if (GetDebugMode()) printf("Octave Increment: %d", GetOctaveOffset());
     if (m_cOctaveOffset < 2)
-        m_cOctaveOffset++;
+        ++m_cOctaveOffset;
+    if (GetDebugMode()) printf("%d\n", GetOctaveOffset());
 }
 
 void MantaMidiSettings::DecrementOctaveOffset()
 {
+    if (GetDebugMode()) printf("Octave Decrement: %d, ", GetOctaveOffset());
     if (m_cOctaveOffset > -2)
-        m_cOctaveOffset--;
+        --m_cOctaveOffset;
+    if (GetDebugMode()) printf("%d\n", GetOctaveOffset());   
 }
 
 char MantaMidiSettings::GetOctaveOffset()
