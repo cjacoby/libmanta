@@ -23,6 +23,14 @@ enum MidiActionType
     atPitchWheel
   };
 
+  enum EventType
+  {
+    etNone = -1,
+    etNoteOff = 0,
+    etNoteOn,
+    etSustain
+  };
+
 typedef struct
 {
   int timeOn;
@@ -57,6 +65,8 @@ class MidiManager : public Manta
   virtual void ButtonEvent(int id, int value);
   virtual void PadVelocityEvent(int row, int column, int id, int value);
   virtual void ButtonVelocityEvent(int id, int value);
+
+  EventType DecodeEvent(int lastValue, int currentValue);
 
   void SendMIDI(unsigned char ucChannel, MidiActionType actionType, int noteNum, int value);
 

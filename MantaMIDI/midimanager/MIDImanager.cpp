@@ -135,6 +135,19 @@ void MidiManager::ButtonVelocityEvent(int id, int value)
   HandleButtonPress(id, value, true);
 }
 
+EventType MidiManager::DecodeEvent(int lastValue, int currentValue)
+{
+  EventType etRet = etNone;
+  if (0 == lastValue && 0 < currentValue )
+    etRet = etNoteOn;
+  else if (0 < lastValue && 0 == currentValue )
+    etRet = etNoteOff;
+  else //if (0 < lastValue && 0 < currentValue )
+    etRet = etSustain;
+
+  return etRet;
+}
+
 void MidiManager::HandleButtonPress(int id, int value, bool bVelocityEvent)
 {
     /*if (!GetCalibrationState())
@@ -142,12 +155,16 @@ void MidiManager::HandleButtonPress(int id, int value, bool bVelocityEvent)
   SetButtonValue(id, value);
   if (m_options->GetButton_Mode(id) == bmOctaveDecrement)
     {
+      if (m_options->GetDebugMode()) printf("Octave Decrement: %d, ", m_options->GetOctaveOffset());
       m_options->DecrementOctaveOffset();
+      if (m_options->GetDebugMode()) printf("%d\n", m_options->GetOctaveOffset());
       UpdateOffsetLEDs();
     }
   else if (m_options->GetButton_Mode(id) == bmOctaveIncrement)
     {
+      if (m_options->GetDebugMode()) printf("Octave Increment: %d", m_options->GetOctaveOffset());
       m_options->IncrementOctaveOffset();
+      if (m_options->GetDebugMode()) printf("%d\n", m_options->GetOctaveOffset());
       UpdateOffsetLEDs();
     }
   else
