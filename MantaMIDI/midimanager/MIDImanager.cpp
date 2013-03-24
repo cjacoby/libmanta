@@ -135,23 +135,48 @@ void MidiManager::ButtonVelocityEvent(int id, int value)
   HandleButtonPress(id, value, true);
 }
 
+EventType MidiManager::DecodeEvent(int lastValue, int currentValue)
+{
+  EventType etRet = etNone;
+  if (0 == lastValue && 0 < currentValue )
+    etRet = etNoteOn;
+  else if (0 < lastValue && 0 == currentValue )
+    etRet = etNoteOff;
+  else //if (0 < lastValue && 0 < currentValue )
+    etRet = etSustain;
+
+  return etRet;
+}
+
 void MidiManager::HandleButtonPress(int id, int value, bool bVelocityEvent)
 {
+  // Get the event type from the current and previous values
+  int lastValue = bVelocityEvent ? GetButtonVelocityValue(id) : GetButtonValue(id);
+  EventType onPress = DecodeEvent(lastValue, value);
+
+  if (m_options->GetDebugMode()) printf("HandleButtonPress: %d/%s, [%d, %d, %d]]\n", onPress, EventTypeString[(int)onPress], id, value, (int)bVelocityEvent);
+
     /*if (!GetCalibrationState())
   {*/
-  SetButtonValue(id, value);
-  if (m_options->GetButton_Mode(id) == bmOctaveDecrement)
+  if (bVelocityEvent)
+    SetButtonVelocityValue(id, value);
+  else
+    SetButtonValue(id, value);
+
+  if (etNoteOn == onPress && m_options->GetButton_Mode(id) == bmOctaveDecrement && !bVelocityEvent)
     {
       m_options->DecrementOctaveOffset();
       UpdateOffsetLEDs();
     }
-  else if (m_options->GetButton_Mode(id) == bmOctaveIncrement)
+  else if (etNoteOn == onPress && m_options->GetButton_Mode(id) == bmOctaveIncrement && !bVelocityEvent)
     {
       m_options->IncrementOctaveOffset();
       UpdateOffsetLEDs();
     }
-  else
-      SendButtonMIDI(id, value, false);
+  else if (bmNote == m_options->GetButton_Mode(id) || bmController == m_options->GetButton_Mode(id))
+  {
+    SendButtonMIDI(id, value, false);
+  }
   /*}
   else
     m_options->CalibrateButton(id, value);*/
@@ -286,20 +311,19 @@ void MidiManager::SetPosOffsetColor(int button)
 {
     switch(m_options->GetOctaveOffset())
     {
-    case 2: SetButtonLED(Manta::Red, button);
-    case 1: SetButtonLED(Manta::Amber, button);
-    default: SetButtonLED(Manta::Off, button);
+    case 2: SetButtonLED(Manta::Red, button); break;
+    case 1: SetButtonLED(Manta::Amber, button); break;
+    default: SetButtonLED(Manta::Off, button); break;
     }
 }
 
 void MidiManager::SetNegOffsetColor(int button)
 {
-    m_options->DecrementOctaveOffset();
     switch(m_options->GetOctaveOffset())
     {
-    case -2: SetButtonLED(Manta::Red, button);
-    case -1: SetButtonLED(Manta::Amber, button);
-    default: SetButtonLED(Manta::Off, button);
+    case -2: SetButtonLED(Manta::Red, button); break;
+    case -1: SetButtonLED(Manta::Amber, button); break;
+    default: SetButtonLED(Manta::Off, button); break;
     }
 }
 
@@ -362,50 +386,50 @@ void MidiManager::SendButtonMIDI(int noteNum, int value, bool bVelocityEvent)
   if (m_options->GetDebugMode()) cout << "SendButtonMIDI: " << channel << " " << midiNote << " " << m_options->GetButton_Mode(noteNum) << " " << noteNum << " " << value << endl;
 
   if ((char)midiNote >= 0)
+  {
+    MidiNote &note = m_buttonNotes[midiNote];
+
+    if (bController)
     {
-      MidiNote &note = m_buttonNotes[midiNote];
-      
-      if (bController)
-	{
-	  Send_ControlChange(channel, midiNote, TranslateButtonValueToMIDI(noteNum, value));
-	  if (value) SetButtonLED(m_options->GetButton_OnColor(noteNum), noteNum);
-	  else SetButtonLED(m_options->GetButton_OffColor(noteNum), noteNum);
-	}
-      else
-	{
-	  if (value > 0)
-	    {
-	      // velocity mode on - it's a noteon or noteoff
-	      if (m_options->GetUseVelocity() && bVelocityEvent)
-		SendButtonNoteOn(channel, midiNote, noteNum, value);
+     Send_ControlChange(channel, midiNote, TranslateButtonValueToMIDI(noteNum, value));
+     if (value) SetButtonLED(m_options->GetButton_OnColor(noteNum), noteNum);
+     else SetButtonLED(m_options->GetButton_OffColor(noteNum), noteNum);
+   }
+   else
+   {
+     if (value > 0)
+     {
+	     // velocity mode on - it's a noteon or noteoff
+       if (m_options->GetUseVelocity() && bVelocityEvent)
+        SendButtonNoteOn(channel, midiNote, noteNum, value);
 	      // not note on or note off, but positive, so it's aftertouch
-	      else if (m_options->GetUseVelocity() && !bVelocityEvent)
-		SendButtonAftertouch(channel, midiNote, noteNum, value);
+      else if (m_options->GetUseVelocity() && !bVelocityEvent)
+        SendButtonAftertouch(channel, midiNote, noteNum, value);
 	      else // velocity off
-		{
-		  // Note On
-		  if (note.lastValue == 0 && !bVelocityEvent)
-		    {
-		      SendButtonNoteOn(channel, midiNote, noteNum, 100);
-		      SendButtonAftertouch(channel, midiNote, noteNum, value);
-		    }
-		  // Aftertouch
-		  else if (note.lastValue > 0)
-		    SendButtonAftertouch(channel, midiNote, noteNum, value);
+        {
+    		  // Note On
+          if (note.lastValue == 0 && !bVelocityEvent)
+          {
+            SendButtonNoteOn(channel, midiNote, noteNum, 100);
+            SendButtonAftertouch(channel, midiNote, noteNum, value);
+          }
+    		  // Aftertouch
+          else if (note.lastValue > 0)
+            SendButtonAftertouch(channel, midiNote, noteNum, value);
 		} // end else velocity off
 	    } // end value > 0
 	  else // note off
-	    {
-	      // ignore velocity events 'cause they're redundant
-	      if (!bVelocityEvent)
-              SendButtonNoteOff(channel, midiNote, noteNum);
+   {
+      // ignore velocity events 'cause they're redundant
+      if (!bVelocityEvent)
+      SendButtonNoteOff(channel, midiNote, noteNum);
 	    } // end else note off
-	} // end else - note
+	} //s end else - note
 
-      note.lastValue = value;
-      note.curValue = value;
+  note.lastValue = value;
+  note.curValue = value;
     } // end if valid note
-}
+  }
 
 void MidiManager::SendButtonNoteOn(int channel, int midiNote, int noteNum, int value)
 {

@@ -23,6 +23,16 @@ enum MidiActionType
     atPitchWheel
   };
 
+enum EventType
+{
+  etNone = 0,
+  etNoteOff = 1,
+  etNoteOn,
+  etSustain
+};
+
+const static char* EventTypeString[] = {"None", "NoteOff", "NoteOn", "Sustain"};
+
 typedef struct
 {
   int timeOn;
@@ -57,6 +67,8 @@ class MidiManager : public Manta
   virtual void ButtonEvent(int id, int value);
   virtual void PadVelocityEvent(int row, int column, int id, int value);
   virtual void ButtonVelocityEvent(int id, int value);
+
+  EventType DecodeEvent(int lastValue, int currentValue);
 
   void SendMIDI(unsigned char ucChannel, MidiActionType actionType, int noteNum, int value);
 
@@ -96,6 +108,11 @@ class MidiManager : public Manta
   void SetButtonValue(int button, int value)                        { m_buttonValues[button] = value; }
   int GetButtonValue(int button)                                    { return m_buttonValues[button]; }
 
+  void SetPadVelocityValue(int pad, int value)                              { m_padVelocityValues[pad] = value; }
+  int GetPadVelocityValue(int pad)                                          { return m_padVelocityValues[pad]; }
+  void SetButtonVelocityValue(int button, int value)                        { m_buttonVelocityValues[button] = value; }
+  int GetButtonVelocityValue(int button)                                    { return m_buttonVelocityValues[button]; }
+
   void SetPosOffsetColor(int button);
   void SetNegOffsetColor(int button);
   void UpdateOffsetLEDs();
@@ -103,8 +120,10 @@ class MidiManager : public Manta
   MidiNote m_padNotes[MAX_MIDI_NOTES];
   MidiNote m_buttonNotes[MAX_MIDI_NOTES];
   int m_buttonValues[MANTA_BUTTONS];
+  int m_buttonVelocityValues[MANTA_BUTTONS];
 
   int m_padValues[MANTA_PADS];
+  int m_padVelocityValues[MANTA_PADS];
   int m_padAftertouchStack[MANTA_PADS];
   int m_padAftertouchStackIndex;
 

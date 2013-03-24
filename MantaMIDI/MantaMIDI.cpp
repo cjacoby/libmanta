@@ -37,7 +37,7 @@ int main(int argc, char* argv[])
           try
           {
               manta.Connect();
-	      manta.Initialize();
+      	      manta.Initialize();
               while (bRun)
               {
                   manta.HandleEvents();
