@@ -151,23 +151,29 @@ EventType MidiManager::DecodeEvent(int lastValue, int currentValue)
 void MidiManager::HandleButtonPress(int id, int value, bool bVelocityEvent)
 {
   // Get the event type from the current and previous values
-  EventType onPress = DecodeEvent(GetButtonValue(id), value);
+  int lastValue = bVelocityEvent ? GetButtonVelocityValue(id) : GetButtonValue(id);
+  EventType onPress = DecodeEvent(lastValue, value);
 
-  if (m_options->GetDebugMode()) printf("HandleButtonPress: %d/%s, v:%d\n", onPress, EventTypeString[(int)onPress], (int)bVelocityEvent);
+  if (m_options->GetDebugMode()) printf("HandleButtonPress: %d/%s, [%d, %d, %d]]\n", onPress, EventTypeString[(int)onPress], id, value, (int)bVelocityEvent);
 
     /*if (!GetCalibrationState())
   {*/
-  SetButtonValue(id, value);
+  if (bVelocityEvent)
+    SetButtonVelocityValue(id, value);
+  else
+    SetButtonValue(id, value);
 
   if (etNoteOn == onPress && m_options->GetButton_Mode(id) == bmOctaveDecrement && !bVelocityEvent)
     {
       m_options->DecrementOctaveOffset();
-      //UpdateOffsetLEDs();
+      UpdateOffsetLEDs();
+      printf("Octave Offset: %d\n", m_options->GetOctaveOffset());
     }
   else if (etNoteOn == onPress && m_options->GetButton_Mode(id) == bmOctaveIncrement && !bVelocityEvent)
     {
       m_options->IncrementOctaveOffset();
-      //UpdateOffsetLEDs();
+      UpdateOffsetLEDs();
+      printf("Octave Offset: %d\n", m_options->GetOctaveOffset());
     }
   else if (bmNote == m_options->GetButton_Mode(id) || bmController == m_options->GetButton_Mode(id))
   {
@@ -307,20 +313,19 @@ void MidiManager::SetPosOffsetColor(int button)
 {
     switch(m_options->GetOctaveOffset())
     {
-    case 2: SetButtonLED(Manta::Red, button);
-    case 1: SetButtonLED(Manta::Amber, button);
-    default: SetButtonLED(Manta::Off, button);
+    case 2: SetButtonLED(Manta::Red, button); break;
+    case 1: SetButtonLED(Manta::Amber, button); break;
+    default: SetButtonLED(Manta::Off, button); break;
     }
 }
 
 void MidiManager::SetNegOffsetColor(int button)
 {
-    m_options->DecrementOctaveOffset();
     switch(m_options->GetOctaveOffset())
     {
-    case -2: SetButtonLED(Manta::Red, button);
-    case -1: SetButtonLED(Manta::Amber, button);
-    default: SetButtonLED(Manta::Off, button);
+    case -2: SetButtonLED(Manta::Red, button); break;
+    case -1: SetButtonLED(Manta::Amber, button); break;
+    default: SetButtonLED(Manta::Off, button); break;
     }
 }
 
