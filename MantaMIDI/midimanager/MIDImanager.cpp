@@ -321,47 +321,49 @@ bool MidiManager::IsCurrentPadMaximum(int value)
 
 void MidiManager::UpdateOffsetLEDs()
 {
-    for(int i=0; i < 4; ++i)
-    {
-      printf("UpdateOffset %d %d\n", i, m_options->GetButton_Mode(i));
-      if (m_options->GetButton_Mode(i) == bmOctaveDecrement)
-        SetNegOffsetColor(i);
-      else if (m_options->GetButton_Mode(i) == bmOctaveIncrement)
-        SetPosOffsetColor(i);
-      else if (m_options->GetButton_Mode(i) = bmChromaticDecrement)
-        ;
-      else if (m_options->GetButton_Mode(i) = bmChromaticIncrement)
-
-    }
+  for(int i=0; i < 4; ++i)
+  {
+    if (bmOctaveDecrement == m_options->GetButton_Mode(i) || bmOctaveIncrement == m_options->GetButton_Mode(i))
+      SetOctaveOffsetColor(i);
+    else
+      SetChromaticOffsetColor(i);
+  }
 }
 
-void MidiManager::SetPosOffsetColor(int button)
+void MidiManager::SetOctaveOffsetColor(int button)
 {
-    switch(m_options->GetOctaveOffset())
-    {
+  switch(m_options->GetOctaveOffset())
+  {
+    case -2: SetButtonLED(Manta::Red, button); break;
+    case -1: SetButtonLED(Manta::Amber, button); break;
     case 2: SetButtonLED(Manta::Red, button); break;
     case 1: SetButtonLED(Manta::Amber, button); break;
     default: SetButtonLED(Manta::Off, button); break;
-    }
+  }
 }
 
-void MidiManager::SetNegOffsetColor(int button)
+void MidiManager::SetChromaticOffsetColor(int button)
 {
-    switch(m_options->GetOctaveOffset())
-    {
-    case -2: SetButtonLED(Manta::Red, button); break;
-    case -1: SetButtonLED(Manta::Amber, button); break;
-    default: SetButtonLED(Manta::Off, button); break;
-    }
+  int offset = m_options->GetChromaticOffset();
+  if (bmChromaticDecrement == m_options->GetButton_Mode(button) && -6 > offset)
+    SetButtonLED(Manta::Red, button);
+  else if (bmChromaticDecrement == m_options->GetButton_Mode(button) && 0 > offset)
+    SetButtonLED(Manta::Amber, button);
+  else if (bmChromaticIncrement == m_options->GetButton_Mode(button) && 6 < offset)
+    SetButtonLED(Manta::Red, button);
+  else if (bmChromaticIncrement == m_options->GetButton_Mode(button) && 0 < offset)
+    SetButtonLED(Manta::Amber, button); 
+  else
+    SetButtonLED(Manta::Off, button);
 }
 
 void MidiManager::SendSliderMIDI(int whichSlider, int value)
 {
-    int channel = m_options->GetSlider_EventChannel(whichSlider);
-    char midiNote =  (char)m_options->GetSlider_MidiNote(whichSlider);
+  int channel = m_options->GetSlider_EventChannel(whichSlider);
+  char midiNote =  (char)m_options->GetSlider_MidiNote(whichSlider);
 
-    if (value != 0x0000FFFF)
-      Send_ControlChange(channel, midiNote, TranslateSliderValueToCC(whichSlider, value));
+  if (value != 0x0000FFFF)
+    Send_ControlChange(channel, midiNote, TranslateSliderValueToCC(whichSlider, value));
 }
 
 int MidiManager::TranslatePadValueToMIDI(int pad, int padValue)
