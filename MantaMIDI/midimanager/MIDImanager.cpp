@@ -323,37 +323,44 @@ void MidiManager::UpdateOffsetLEDs()
 {
   for(int i=0; i < 4; ++i)
   {
-    if (bmOctaveDecrement == m_options->GetButton_Mode(i) || bmOctaveIncrement == m_options->GetButton_Mode(i))
-      SetOctaveOffsetColor(i);
-    else
-      SetChromaticOffsetColor(i);
+    ButtonMode bm = m_options->GetButton_Mode(i);
+    SetOctaveOffsetColor(i, bm);
+    SetChromaticOffsetColor(i, bm);
   }
 }
 
-void MidiManager::SetOctaveOffsetColor(int button)
+void MidiManager::SetOctaveOffsetColor(int button, ButtonMode bm)
 {
-  switch(m_options->GetOctaveOffset())
-  {
-    case -2: SetButtonLED(Manta::Red, button); break;
-    case -1: SetButtonLED(Manta::Amber, button); break;
-    case 2: SetButtonLED(Manta::Red, button); break;
-    case 1: SetButtonLED(Manta::Amber, button); break;
-    default: SetButtonLED(Manta::Off, button); break;
+  if (bm == bmOctaveDecrement){
+    switch(m_options->GetOctaveOffset())
+    {
+      case -2: SetButtonLED(Manta::Red, button); break;
+      case -1: SetButtonLED(Manta::Amber, button); break;
+      default: SetButtonLED(Manta::Off, button); break;
+    }  
+  }
+  else if (bm == bmOctaveIncrement){
+    switch(m_options->GetOctaveOffset())
+    {
+      case 2: SetButtonLED(Manta::Red, button); break;
+      case 1: SetButtonLED(Manta::Amber, button); break;
+      default: SetButtonLED(Manta::Off, button); break;
+    }  
   }
 }
 
-void MidiManager::SetChromaticOffsetColor(int button)
+void MidiManager::SetChromaticOffsetColor(int button, ButtonMode bm)
 {
   int offset = m_options->GetChromaticOffset();
-  if (bmChromaticDecrement == m_options->GetButton_Mode(button) && -6 > offset)
+  if (bmChromaticDecrement == bm && -6 > offset)
     SetButtonLED(Manta::Red, button);
-  else if (bmChromaticDecrement == m_options->GetButton_Mode(button) && 0 > offset)
+  else if (bmChromaticDecrement == bm && 0 > offset)
     SetButtonLED(Manta::Amber, button);
-  else if (bmChromaticIncrement == m_options->GetButton_Mode(button) && 6 < offset)
+  else if (bmChromaticIncrement == bm && 6 < offset)
     SetButtonLED(Manta::Red, button);
-  else if (bmChromaticIncrement == m_options->GetButton_Mode(button) && 0 < offset)
+  else if (bmChromaticIncrement == bm && 0 < offset)
     SetButtonLED(Manta::Amber, button); 
-  else
+  else if ((bmChromaticIncrement == bm || bmChromaticDecrement == bm) && 0 == offset)
     SetButtonLED(Manta::Off, button);
 }
 

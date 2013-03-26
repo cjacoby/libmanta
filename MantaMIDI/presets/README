@@ -1,0 +1,34 @@
+ManatMIDI preset options work as follows:
+
+Master Settings are applied first, followed by the individual settings. If you wish all of something but one to have a value, set the master as the general setting, and then set the specifics in the individual settings.
+
+ALL settings must be kept in the form:
+Label, value;
+
+The semicolon and the comma are important! If the setting isn't working, check to make sure those things are present.
+
+For Color values:
+0 = off
+1 = amber
+2 = red
+
+================================================
+Master settings (Label, [possible values])
+Velocity, [0,1];
+Pad_Mode, [0,1,2]; // 0 = MonoContinuous, 1 = PolyAftertouch, 2 = PolyContinuous
+Pad_InactiveColor, [0,1,2];
+Pad_OnColor, [0,1,2];
+Pad_OffColor, [0,1,2];
+Pad_Channel, [1-16]; // Yes, it's 1-based.
+
+================================================
+Individual settings
+Pad_#, [1-128] <[1-16]>; // #=pad id number, 1-48. First number is MIDI note, second is channel. 1-based.
+Button_#_Mode, [0-5]; // #=button id number. 0 = Note, 1 = Controller, 2 = Octave Decrement, 3 = Octave Increment, 4 = Chromatic Decrement, 5 = Chromatic Increment
+Buttom_#_MIDI, [1-128] [1-16]; // midi note and NOT-optional channel.
+Button_#_InactiveColor, [0,1,2]; // Button colors are only for note and controller mode. Other modes's color's are determined automatically.
+Button_#_OnColor, [0,1,2];
+Button_#_OffColor, [0,1,2];
+
+Slider_#_MIDI, [1-128] [1-16];
+Slider_#_Mode, [0,1]; // 0=Continuous; 1=Pitch Bend

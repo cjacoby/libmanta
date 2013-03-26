@@ -4,7 +4,10 @@ Pad_Aftertouch, 0;
 Pad_InactiveColor, 0; 
 Pad_OnColor, 2; 
 Pad_OffColor, 0;
-
+Button_1_Mode, 3;
+Button_2_Mode, 5;
+Button_3_Mode, 2;
+Button_4_Mode, 4;
 Pad_1, 61;
 Pad_2, 63;
 Pad_3, 65;
@@ -53,13 +56,3 @@ Pad_45, 100;
 Pad_46, 102;
 Pad_47, 104;
 Pad_48, 106;
-
-
-; Pad_Channel     // Assigns value for all pads
-; Pad_CC          /
-; Pad_Midi
-; Pad_InactiveColor
-; Pad_OnColor
-; Pad_OffColor
-
-; Pad_[Index] [Midi Note] <Midi Chan>
