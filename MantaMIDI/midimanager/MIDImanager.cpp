@@ -44,40 +44,40 @@ bool MidiManager::GetCalibrationState()
 
 void MidiManager::Initialize()
 {
-    if (m_options->GetDebugMode()) cout << "MidiManger::Initialize() Start" << endl;
+  if (m_options->GetDebugMode()) cout << "MidiManger::Initialize() Start" << endl;
 
- SetLEDControl(Manta::PadAndButton, true);
-    SetLEDControl(Manta::Slider, false);
+  SetLEDControl(Manta::PadAndButton, true);
+  SetLEDControl(Manta::Slider, false);
 
-    for(int i = 0; i < MANTA_BUTTONS; ++i)
+  for(int i = 0; i < MANTA_BUTTONS; ++i)
+  {
+    if (-1 == (char)m_options->GetButton_Midi(i))
     {
-        if (-1 == (char)m_options->GetButton_Midi(i))
-        {
-            if (m_options->GetDebugMode()) cout << "[Off] Set Button Color" << i << " " << m_options->GetButton_InactiveColor(i) << endl;
-            SetButtonLED(m_options->GetButton_InactiveColor(i), i);
-        }
-        else
-        {
-            if (m_options->GetDebugMode()) cout << "Set Button Color" << i << " " << m_options->GetButton_OffColor(i) << endl;
-            SetButtonLED(m_options->GetButton_OffColor(i), i);
-        }
+      if (m_options->GetDebugMode()) cout << "[Off] Set Button Color" << i << " " << m_options->GetButton_InactiveColor(i) << endl;
+      SetButtonLED(m_options->GetButton_InactiveColor(i), i);
     }
-
-    for(int i = 0; i < MANTA_PADS; ++i)
+    else
     {
-        if (-1 == (char)m_options->GetPad_Midi(i))
-        {
-            SetPadLED(m_options->GetPad_InactiveColor(i), i);
-            if (m_options->GetDebugMode()) cout << "[Off] Set Pad Color [" << (int)m_options->GetPad_Midi(i) << "] " << i << " " << m_options->GetPad_InactiveColor(i) << endl;
-        }
-        else
-        {
-            SetPadLED(m_options->GetPad_OffColor(i), i);
-            if (m_options->GetDebugMode()) cout << "Set Pad Color [" << (int)m_options->GetPad_Midi(i) << "] " << i << " " << m_options->GetPad_OffColor(i) << endl;
-        }
+      if (m_options->GetDebugMode()) cout << "Set Button Color" << i << " " << m_options->GetButton_OffColor(i) << endl;
+      SetButtonLED(m_options->GetButton_OffColor(i), i);
     }
+  }
 
-    if (m_options->GetDebugMode()) cout << "MidiManger::Initialize() End" << endl;
+  for(int i = 0; i < MANTA_PADS; ++i)
+  {
+    if (-1 == (char)m_options->GetPad_Midi(i))
+    {
+      SetPadLED(m_options->GetPad_InactiveColor(i), i);
+      if (m_options->GetDebugMode()) cout << "[Off] Set Pad Color [" << (int)m_options->GetPad_Midi(i) << "] " << i << " " << m_options->GetPad_InactiveColor(i) << endl;
+    }
+    else
+    {
+      SetPadLED(m_options->GetPad_OffColor(i), i);
+      if (m_options->GetDebugMode()) cout << "Set Pad Color [" << (int)m_options->GetPad_Midi(i) << "] " << i << " " << m_options->GetPad_OffColor(i) << endl;
+    }
+  }
+
+  if (m_options->GetDebugMode()) cout << "MidiManger::Initialize() End" << endl;
 }
 
 MantaMidiSettings *MidiManager::GetOptions()
@@ -163,39 +163,43 @@ void MidiManager::HandleButtonPress(int id, int value, bool bVelocityEvent)
   else
     SetButtonValue(id, value);
 
-  // Octave Decrement
-  if (etNoteOn == onPress && !bVelocityEvent)
-  {
-    if (bmOctaveDecrement == m_options->GetButton_Mode(id))
-    {
-      if (m_options->DecrementOctaveOffset())
-        printf("octave offset changed to: %d\n", m_options->GetOctaveOffset());  
-      UpdateOffsetLEDs();
-    }
-    // Octave Increment
-    else if (bmOctaveIncrement == m_options->GetButton_Mode(id))
-    {
-      if(m_options->IncrementOctaveOffset())
-        printf("octave offset changed to: %d\n", m_options->GetOctaveOffset());  
-      UpdateOffsetLEDs();
-    }
-    // Chromatic Decrement
-    else if (bmChromaticDecrement == m_options->GetButton_Mode(id))
-    {
-      if(m_options->DecrementChromaticOffset())
-        printf("chromatic offset changed to: %d\n", m_options->GetChromaticOffset());
-    }
-    // Chromatic Increment
-    else if (bmChromaticIncrement == m_options->GetButton_Mode(id))
-    {
-      if(m_options->IncrementChromaticOffset())
-        printf("chromatic offset changed to: %d\n", m_options->GetChromaticOffset());
-    }
-  } // end if 
-  else //(bmNote == m_options->GetButton_Mode(id) || bmController == m_options->GetButton_Mode(id))
-  {
+
+  if (bmNote == m_options->GetButton_Mode(id) || bmController == m_options->GetButton_Mode(id))
     SendButtonMIDI(id, value, false);
-  }
+  else
+  {
+    if (etNoteOn == onPress && !bVelocityEvent)
+    {
+      // Octave Decrement
+      if (bmOctaveDecrement == m_options->GetButton_Mode(id))
+      {
+        if (m_options->DecrementOctaveOffset())
+          printf("octave offset changed to: %d\n", m_options->GetOctaveOffset());  
+        UpdateOffsetLEDs();
+      }
+      // Octave Increment
+      else if (bmOctaveIncrement == m_options->GetButton_Mode(id))
+      {
+        if(m_options->IncrementOctaveOffset())
+          printf("octave offset changed to: %d\n", m_options->GetOctaveOffset());  
+        UpdateOffsetLEDs();
+      }
+      // Chromatic Decrement
+      else if (bmChromaticDecrement == m_options->GetButton_Mode(id))
+      {
+        if(m_options->DecrementChromaticOffset())
+          printf("chromatic offset changed to: %d\n", m_options->GetChromaticOffset());
+        UpdateOffsetLEDs();
+      }
+      // Chromatic Increment
+      else if (bmChromaticIncrement == m_options->GetButton_Mode(id))
+      {
+        if(m_options->IncrementChromaticOffset())
+          printf("chromatic offset changed to: %d\n", m_options->GetChromaticOffset());
+        UpdateOffsetLEDs();
+      }
+  } // end if 
+}
   /*}
   else
     m_options->CalibrateButton(id, value);*/
@@ -319,10 +323,15 @@ void MidiManager::UpdateOffsetLEDs()
 {
     for(int i=0; i < 4; ++i)
     {
-        if (m_options->GetButton_Mode(i) == bmOctaveDecrement)
-            SetNegOffsetColor(i);
-        else if (m_options->GetButton_Mode(i) == bmOctaveIncrement)
-            SetPosOffsetColor(i);
+      printf("UpdateOffset %d %d\n", i, m_options->GetButton_Mode(i));
+      if (m_options->GetButton_Mode(i) == bmOctaveDecrement)
+        SetNegOffsetColor(i);
+      else if (m_options->GetButton_Mode(i) == bmOctaveIncrement)
+        SetPosOffsetColor(i);
+      else if (m_options->GetButton_Mode(i) = bmChromaticDecrement)
+        ;
+      else if (m_options->GetButton_Mode(i) = bmChromaticIncrement)
+
     }
 }
 
