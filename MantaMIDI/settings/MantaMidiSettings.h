@@ -34,7 +34,9 @@ enum ButtonMode
     bmNote = 0,
     bmController = 1,
     bmOctaveDecrement,
-    bmOctaveIncrement
+    bmOctaveIncrement,
+    bmChromaticDecrement,
+    bmChromaticIncrement
   };
 
 class MantaMidiSettings
@@ -113,10 +115,13 @@ class MantaMidiSettings
     void SetButton_OffColor(int button, Manta::LEDState color);
     void SetButton_InactiveColor(int button, Manta::LEDState color);
     void SetButton(int button, unsigned char channel, unsigned char key, ButtonMode mode, Manta::LEDState onColor, Manta::LEDState offColor, Manta::LEDState inactiveColor);
-    void IncrementOctaveOffset();
-    void DecrementOctaveOffset();
+    bool IncrementOctaveOffset();
+    bool DecrementOctaveOffset();
     char GetOctaveOffset();
     char GetOctaveMidiOffset();
+    bool IncrementChromaticOffset();
+    bool DecrementChromaticOffset();
+    char GetChromaticOffset();
     void CalibrateButton(int button, int value);
     void Reset();
   
@@ -163,6 +168,7 @@ protected:
     const static int numButtons = 4;
     const static int defaultMaxButtonVal = 210;
     char m_cOctaveOffset;
+    char m_cChromaticOffset;
     ButtonMode m_buttonMode[numButtons];
     unsigned char m_buttonEventChannel[numButtons];
     char m_buttonMidi[numButtons];

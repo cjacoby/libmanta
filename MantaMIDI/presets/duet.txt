@@ -1,4 +1,4 @@
-Velocity, 0;
+Velocity, 1;
 Pad_Channel, 1;
 Pad_Aftertouch, 0; 
 Pad_InactiveColor, 0; 

@@ -358,20 +358,26 @@ void MantaMidiSettings::SetButton(int button, unsigned char channel, unsigned ch
     }
 }
 
-void MantaMidiSettings::IncrementOctaveOffset()
+bool MantaMidiSettings::IncrementOctaveOffset()
 {
-    if (GetDebugMode()) printf("Octave Increment: %d", GetOctaveOffset());
+    bool bRet = false;
     if (m_cOctaveOffset < 2)
+    {
         ++m_cOctaveOffset;
-    if (GetDebugMode()) printf("%d\n", GetOctaveOffset());
+        bRet = true;
+    }
+    return bRet;
 }
 
-void MantaMidiSettings::DecrementOctaveOffset()
+bool MantaMidiSettings::DecrementOctaveOffset()
 {
-    if (GetDebugMode()) printf("Octave Decrement: %d, ", GetOctaveOffset());
+    bool bRet = false;
     if (m_cOctaveOffset > -2)
+    {
         --m_cOctaveOffset;
-    if (GetDebugMode()) printf("%d\n", GetOctaveOffset());   
+        bRet = true;
+    }
+    return bRet;
 }
 
 char MantaMidiSettings::GetOctaveOffset()
@@ -382,6 +388,33 @@ char MantaMidiSettings::GetOctaveOffset()
 char MantaMidiSettings::GetOctaveMidiOffset()
 {
     return m_cOctaveOffset * 12;
+}
+
+bool MantaMidiSettings::IncrementChromaticOffset()
+{
+    bool bRet = false;
+    if (m_cChromaticOffset < 12)
+    {
+        m_cChromaticOffset = ++m_cChromaticOffset;
+        bRet = true;
+    }
+    return bRet;
+}
+
+bool MantaMidiSettings::DecrementChromaticOffset()
+{
+    bool bRet = false;
+    if (m_cChromaticOffset > -12)
+    {
+        m_cChromaticOffset = --m_cChromaticOffset;
+        bRet = true;
+    }
+    return bRet;
+}
+
+char MantaMidiSettings::GetChromaticOffset()
+{
+    return m_cChromaticOffset;
 }
 
 void MantaMidiSettings::CalibrateButton(int button, int value)
@@ -419,6 +452,7 @@ void MantaMidiSettings::Reset()
 
     // Button Defaults
     m_cOctaveOffset = 0;
+    m_cChromaticOffset = 0;
     memset(m_buttonMode, 1, numButtons);
     memset(m_buttonEventChannel, 0, numButtons);
     memset(m_buttonMidi, 0, numButtons);
