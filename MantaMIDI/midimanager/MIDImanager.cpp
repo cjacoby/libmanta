@@ -163,17 +163,36 @@ void MidiManager::HandleButtonPress(int id, int value, bool bVelocityEvent)
   else
     SetButtonValue(id, value);
 
-  if (etNoteOn == onPress && m_options->GetButton_Mode(id) == bmOctaveDecrement && !bVelocityEvent)
+  // Octave Decrement
+  if (etNoteOn == onPress && !bVelocityEvent)
+  {
+    if (bmOctaveDecrement == m_options->GetButton_Mode(id))
     {
-      m_options->DecrementOctaveOffset();
+      if (m_options->DecrementOctaveOffset())
+        printf("octave offset changed to: %d\n", m_options->GetOctaveOffset());  
       UpdateOffsetLEDs();
     }
-  else if (etNoteOn == onPress && m_options->GetButton_Mode(id) == bmOctaveIncrement && !bVelocityEvent)
+    // Octave Increment
+    else if (bmOctaveIncrement == m_options->GetButton_Mode(id))
     {
-      m_options->IncrementOctaveOffset();
+      if(m_options->IncrementOctaveOffset())
+        printf("octave offset changed to: %d\n", m_options->GetOctaveOffset());  
       UpdateOffsetLEDs();
     }
-  else if (bmNote == m_options->GetButton_Mode(id) || bmController == m_options->GetButton_Mode(id))
+    // Chromatic Decrement
+    else if (bmChromaticDecrement == m_options->GetButton_Mode(id))
+    {
+      if(m_options->DecrementChromaticOffset())
+        printf("chromatic offset changed to: %d\n", m_options->GetChromaticOffset());
+    }
+    // Chromatic Increment
+    else if (bmChromaticIncrement == m_options->GetButton_Mode(id))
+    {
+      if(m_options->IncrementChromaticOffset())
+        printf("chromatic offset changed to: %d\n", m_options->GetChromaticOffset());
+    }
+  } // end if 
+  else //(bmNote == m_options->GetButton_Mode(id) || bmController == m_options->GetButton_Mode(id))
   {
     SendButtonMIDI(id, value, false);
   }
@@ -197,25 +216,25 @@ void MidiManager::SendPadMIDI(int noteNum, int value, bool bVelocityEvent)
             // Velocity Mode is on, and we got a velocity event, so we know it's a NoteOn or NoteOff
             if (m_options->GetUseVelocity() && bVelocityEvent)
             {
-                SendPadNoteOn(channel, midiNote + m_options->GetOctaveMidiOffset(), noteNum, value);
+                SendPadNoteOn(channel, midiNote + m_options->GetOctaveMidiOffset() + m_options->GetChromaticOffset(), noteNum, value);
             }
             // not a note on or note off, but a positive value; therefore aftertouch
             else if (m_options->GetUseVelocity() && !bVelocityEvent)
             {
-                SendPadAftertouch(channel, midiNote + m_options->GetOctaveMidiOffset(), noteNum, value);
+                SendPadAftertouch(channel, midiNote + m_options->GetOctaveMidiOffset() + m_options->GetChromaticOffset(), noteNum, value);
             }
             else // velocity mode is off
             {
                 // Note On
                 if (note.lastValue == 0 && !bVelocityEvent)
                 {
-                    SendPadNoteOn(channel, midiNote + m_options->GetOctaveMidiOffset(), noteNum, 100);
-                    SendPadAftertouch(channel, midiNote + m_options->GetOctaveMidiOffset(), noteNum, value);
+                    SendPadNoteOn(channel, midiNote + m_options->GetOctaveMidiOffset() + m_options->GetChromaticOffset(), noteNum, 100);
+                    SendPadAftertouch(channel, midiNote + m_options->GetOctaveMidiOffset() + m_options->GetChromaticOffset(), noteNum, value);
                 }
                 // Aftertouch
                 else if (note.lastValue > 0)
                 {
-                   SendPadAftertouch(channel, midiNote + m_options->GetOctaveMidiOffset(), noteNum, value);
+                   SendPadAftertouch(channel, midiNote + m_options->GetOctaveMidiOffset() + m_options->GetChromaticOffset(), noteNum, value);
                 }
             }
         }
@@ -224,7 +243,7 @@ void MidiManager::SendPadMIDI(int noteNum, int value, bool bVelocityEvent)
             // we're just ignoring velocity events with velocity zero to avoid redundant values
             // (because padevent is already sending them)
             if (!bVelocityEvent)
-                SendPadNoteOff(channel, midiNote + m_options->GetOctaveMidiOffset(), noteNum);
+                SendPadNoteOff(channel, midiNote + m_options->GetOctaveMidiOffset() + m_options->GetChromaticOffset(), noteNum);
         }
 
       note.lastValue = note.curValue;

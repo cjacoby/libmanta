@@ -57,8 +57,8 @@ MantaSettingsParser::MantaSettingsParser(MantaMidiSettings *pSettings)
     // Button Settings
     DEFINE_CONFIG_DEFAULT("Button_1_Mode", "2");
     DEFINE_CONFIG_DEFAULT("Button_2_Mode", "3");
-    DEFINE_CONFIG_DEFAULT("Button_3_Mode", "1");
-    DEFINE_CONFIG_DEFAULT("Button_4_Mode", "1");
+    DEFINE_CONFIG_DEFAULT("Button_3_Mode", "4");
+    DEFINE_CONFIG_DEFAULT("Button_4_Mode", "5");
 
     for (int i = 1; i <= 4; ++i)
     {
